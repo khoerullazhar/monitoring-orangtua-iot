@@ -412,7 +412,9 @@ def download_laporan_excel_formal():
                     ws_det.append([s['id'], s['name'], f"{s['class_level']} {s['major']}", l_date, wib_t.split(" ")[1], log['status']])
                     for col_d in range(1, 7):
                         cell_d = ws_det.cell(row=row_det_idx, column=col_d)
-                        cell_d.font = font_body; cell_d.border = thin_border; cell_d.alignment = align_center if col_d != 2 else align_left
+                        cell_d.font = font_body; cell_d.border = thin_border; cell_d.alignment = align_center if col_d
+Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
+ != 2 else align_left
                         if col_d == 6:
                             if log['status'] == "Kesiangan": cell_d.fill = fill_yellow
                             elif log['status'] == "Bolos": cell_d.fill = fill_red
@@ -457,4 +459,4 @@ def quick_verify_permission(perm_id, new_status):
     except Exception as e: return str(e), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=7860, debug=True)
