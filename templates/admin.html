@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Kendali Admin - Sistem Presensi</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        body { background-color: #f8fafc; color: #334155; }
+        .bg-theme-dark { background-color: #1e293b !important; }
+        .text-theme-emerald { color: #0f766e !important; }
+        
+        .menu-card {
+            border: 1px solid #e2e8f0; border-radius: 16px;
+            transition: all 0.25s ease; cursor: pointer; background: #ffffff;
+            min-height: 155px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(30, 41, 59, 0.08) !important;
+            border-color: #0f766e;
+        }
+        .menu-card h6 { font-size: 14px; word-break: keep-all; white-space: normal; line-height: 1.3; }
+        .icon-circle { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 22px; }
+        
+        .section-card { border: none; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: none; background: #ffffff; overflow: hidden; }
+        .table thead { background-color: #1e293b; color: #ffffff; }
+        .table thead th { font-weight: 600; padding: 12px; }
+        .table tbody td { padding: 12px; vertical-align: middle; }
+        .form-control, .form-select { border-radius: 8px; border: 1px solid #cbd5e1; }
+        
+        /* ========================================================
+        /* INTERAKSI BARU: CSS OVERLAY POP-UP LIGHTBOX MAGNIFIER
+        /* ======================================================== */
+        .custom-lightbox {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(15, 23, 42, 0.85); z-index: 9999;
+            align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .custom-lightbox.show { display: flex; opacity: 1; }
+        .lightbox-content-box { position: relative; max-width: 85%; max-height: 85%; text-align: center; }
+        .lightbox-img {
+            max-width: 100%; max-height: 75vh; border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            border: 4px solid #ffffff; transition: transform 0.3s ease;
+        }
+        .lightbox-close-btn {
+            position: absolute; top: -20px; right: -20px; width: 42px; height: 42px;
+            background: #ef4444; color: #ffffff; border-radius: 50%; border: 3px solid #ffffff;
+            display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: all 0.2s ease;
+        }
+        .lightbox-close-btn:hover { transform: scale(1.1); background: #dc2626; }
+        .zoom-hint-text { color: #94a3b8; font-size: 13px; margin-top: 12px; font-weight: 500; }
+        .clickable-lens { cursor: zoom-in; transition: opacity 0.2s ease; }
+        .clickable-lens:hover { opacity: 0.85; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-theme-dark sticky-top shadow-sm py-3">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1 fw-bold"><i class="bi bi-shield-lock-fill text-warning me-2"></i> ADMIN PANEL SMK</span>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-light btn-sm fw-bold rounded-2 px-3" onclick="showSection('home')"><i class="bi bi-house-door-fill me-1"></i> Beranda</button>
+                <a href="/admin/logout" class="btn btn-danger btn-sm fw-bold rounded-2 px-3"><i class="bi bi-box-arrow-right me-1"></i> Keluar</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        
+        <div id="home-section">
+            <div class="text-center mb-5">
+                <h3 class="fw-bold text-dark">Pusat Administrasi Akademik</h3>
+                <p class="text-muted">Sistem rekapitulasi data kehadiran, perizinan siswa, dan otorisasi biometrik perangkat keras.</p>
+            </div>
+            
+            <div class="row g-3 justify-content-center row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-7">
+                <div class="col" onclick="showSection('kamera')">
+                    <div class="card menu-card p-3 text-center shadow-sm">
+                        <div class="icon-circle bg-light text-theme-emerald"><i class="bi bi-camera-fill"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Log Kamera</h6>
+                        <small class="text-muted" id="count-kamera">0 Presensi</small>
+                    </div>
+                </div>
+                <div class="col" onclick="showSection('perizinan')">
+                    <div class="card menu-card p-3 text-center shadow-sm">
+                        <div class="icon-circle bg-light text-theme-emerald"><i class="bi bi-mic-fill"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Persetujuan Izin</h6>
+                        <small class="text-muted" id="count-perizinan">0 Berkas</small>
+                    </div>
+                </div>
+                <div class="col" onclick="showSection('laporan')">
+                    <div class="card menu-card p-3 text-center shadow-sm border-success bg-success bg-opacity-10">
+                        <div class="icon-circle bg-success text-white"><i class="bi bi-file-earmark-bar-graph-fill"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Laporan Kelas</h6>
+                        <small class="text-success fw-bold">Detail Kehadiran</small>
+                    </div>
+                </div>
+                <div class="col" onclick="showSection('jam-sekolah')">
+                    <div class="card menu-card p-3 text-center shadow-sm border-primary">
+                        <div class="icon-circle bg-primary bg-opacity-10 text-primary"><i class="bi bi-clock-history"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Jam Sekolah</h6>
+                        <small class="text-primary fw-bold">Senin - Minggu</small>
+                    </div>
+                </div>
+                <div class="col" onclick="showSection('tambah-akun')">
+                    <div class="card menu-card p-3 text-center shadow-sm">
+                        <div class="icon-circle bg-light text-theme-emerald"><i class="bi bi-person-plus-fill"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Tambah Siswa</h6>
+                        <small class="text-muted">Baru</small>
+                    </div>
+                </div>
+                <div class="col" onclick="showSection('kelola-akun')">
+                    <div class="card menu-card p-3 text-center shadow-sm">
+                        <div class="icon-circle bg-light text-theme-emerald"><i class="bi bi-key-fill"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Ubah Kredensial</h6>
+                        <small class="text-muted">Data Akun</small>
+                    </div>
+                </div>
+                <div class="col" onclick="showSection('manajemen-iot')">
+                    <div class="card menu-card p-3 text-center shadow-sm border-warning">
+                        <div class="icon-circle bg-warning bg-opacity-10 text-warning"><i class="bi bi-fingerprint"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Sidik Jari IoT</h6>
+                        <small class="text-muted text-warning fw-bold">Enroll / Hapus</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="kamera-section" class="card section-card shadow-sm">
+            <div class="card-header bg-theme-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-camera-fill me-2"></i> Log Kehadiran Fisik ESP32-CAM</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="showSection('home')">Kembali</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle text-center" id="table-kamera">
+                        <thead>
+                            <tr>
+                                <th>ID Siswa</th>
+                                <th>Nama Murid</th>
+                                <th>Kelas / Jurusan</th>
+                                <th>Waktu Presensi</th>
+                                <th>Bukti Gambar</th>
+                                <th>Status Hadir</th>
+                                <th>Aksi Kendali</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-kamera"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="perizinan-section" class="card section-card shadow-sm">
+            <div class="card-body">
+                <div class="border rounded-3 p-3 mb-5 bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h6 class="fw-bold text-primary mb-0"><i class="bi bi-envelope-paper-fill me-2"></i>Kotak Masuk Pengajuan Terbaru (Pending)</h6>
+                        <span class="badge bg-danger rounded-pill fw-bold" id="badge-pending-count">0</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped text-center align-middle" id="table-pending">
+                            <thead class="table-primary text-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nama Siswa</th>
+                                    <th>Kelas</th>
+                                    <th>Kategori</th>
+                                    <th>Tanggal Absen</th>
+                                    <th>Verifikasi Suara</th>
+                                    <th>Aksi Cepat Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-perizinan-pending"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="border rounded-3 p-3 bg-white shadow-sm">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-2 mb-3 gap-2">
+                        <h6 class="fw-bold text-success mb-0"><i class="bi bi-clock-history me-2"></i>Riwayat Pengarsipan Perizinan Selesai</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-bold small text-secondary text-nowrap">Filter Kelas:</label>
+                            <select id="filter-riwayat-izin" class="form-select form-select-sm" style="width: 140px;" onchange="filterRiwayatIzinKelas()">
+                                <option value="ALL">Semua Kelas</option>
+                                <option value="TKJ">X/XI/XII TKJ</option>
+                                <option value="BD">X/XI/XII BD</option>
+                                <option value="TO">X/XI/XII TO</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center align-middle" id="table-riwayat-perizinan">
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nama Siswa</th>
+                                    <th>Kelas & Jurusan</th>
+                                    <th>Kategori</th>
+                                    <th>Tanggal Absen</th>
+                                    <th>Status Akhir</th>
+                                    <th>Hapus Arsip</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-perizinan-riwayat"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="laporan-section" class="card section-card shadow-sm">
+            <div class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-bar-graph-fill me-2"></i> Rekapitulasi Kehadiran Tingkat Satuan Pendidikan</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-light fw-bold" onclick="jalankanUnduhExcelFormal()"><i class="bi bi-file-earmark-excel-fill text-success me-1"></i>Unduh Berkas Laporan (.xlsx)</button>
+                    <button class="btn btn-sm btn-outline-light" onclick="showSection('home')">Kembali</button>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="p-3 bg-light rounded-3 border mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-secondary">FILTER PER KELAS / JURUSAN:</label>
+                            <select id="filter-laporan-kelas" class="form-select form-select-sm" onchange="renderLaporanSiswa()">
+                                <option value="ALL">Semua Kelas</option>
+                                <option value="TKJ">Teknik Komputer Jaringan (TKJ)</option>
+                                <option value="BD">Bisnis Digital (BD)</option>
+                                <option value="TO">Teknik Otomotif (TO)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-secondary">FILTER PER ORANG (CARI NAMA):</label>
+                            <input type="text" id="filter-laporan-nama" class="form-control form-control-sm" placeholder="Ketik nama murid..." onkeyup="renderLaporanSiswa()">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-secondary">FILTER TANGGAL (PER HARI):</label>
+                            <input type="date" id="filter-laporan-tanggal" class="form-control form-control-sm" onchange="renderLaporanSiswa()">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-secondary">FILTER BULAN (PER BULAN):</label>
+                            <select id="filter-laporan-bulan" class="form-select form-select-sm" onchange="renderLaporanSiswa()">
+                                <option value="ALL">Semua Bulan</option>
+                                <option value="01">Januari</option>
+                                <option value="02">Februari</option>
+                                <option value="03">Maret</option>
+                                <option value="04">April</option>
+                                <option value="05">Mei</option>
+                                <option value="06">Juni</option>
+                                <option value="07">Juli</option>
+                                <option value="08">Agustus</option>
+                                <option value="09">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center align-middle mb-0">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th style="width: 80px;">ID</th>
+                                <th>NAMA LENGKAP SISWA</th>
+                                <th>KELAS / JURUSAN</th>
+                                <th class="text-success">🟢 HADIR</th>
+                                <th class="text-warning">⚠️ KESIANGAN</th>
+                                <th class="text-danger">🛑 BOLOS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-laporan"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="jam-sekolah-section" class="card section-card shadow-sm">
+            <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i> Pengaturan Waktu Kerja Sekolah</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="showSection('home')">Kembali</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Hari</th>
+                                <th>Jam Batas Masuk (Mulai Kesiangan)</th>
+                                <th>Jam Batas Pulang (Mulai Evaluasi Bolos)</th>
+                                <th>Simpan Config</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-jam-sekolah"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tambah-akun-section" class="card section-card shadow-sm" style="max-width: 550px; margin: 0 auto;">
+            <div class="card-header bg-theme-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-person-plus-fill me-2"></i> Registrasi Siswa & Wali Murid</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="showSection('home')">Kembali</button>
+            </div>
+            <div class="card-body p-4">
+                <form action="/admin/add-student" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">ID SISWA (USERNAME PORTAL)</label>
+                        <input type="number" name="student_id" class="form-control" placeholder="Masukkan ID Unik" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">NAMA LENGKAP SISWA</label>
+                        <input type="text" name="name" class="form-control" placeholder="Masukkan Nama Lengkap" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">NAMA LENGKAP ORANG TUA / WALI</label>
+                        <input type="text" name="parent_name" class="form-control" placeholder="Masukkan Nama Wali" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">TINGKAT KELAS</label>
+                            <select name="class_level" class="form-select" required>
+                                <option value="X">X</option>
+                                <option value="XI">XI</option>
+                                <option value="XII">XII</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">JURUSAN</label>
+                            <select name="major" class="form-select" required>
+                                <option value="BD">Bisnis Digital (BD)</option>
+                                <option value="TKJ">Teknik Komputer Jaringan (TKJ)</option>
+                                <option value="TO">Teknik Otomotif (TO)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small">NO. HP WALI (PASSWORD PORTAL)</label>
+                        <input type="text" name="parent_phone" class="form-control" placeholder="Contoh: 081234xxxxx" required>
+                    </div>
+                    <button type="submit" class="btn btn-theme-action w-100 py-2.5 fw-bold">DAFTARKAN AKUN</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="kelola-akun-section" class="card section-card shadow-sm">
+            <div class="card-header bg-theme-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-key-fill me-2"></i> Sinkronisasi Kredensial Akun</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="showSection('home')">Kembali</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle text-center mb-0" id="table-kelola">
+                        <thead>
+                            <tr>
+                                <th>Username (ID)</th>
+                                <th>Nama Siswa</th>
+                                <th>Nama Wali</th>
+                                <th>Kelas</th>
+                                <th>Jurusan</th>
+                                <th>Password (No. HP Wali)</th>
+                                <th>Simpan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-kelola"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="manajemen-iot-section" class="card section-card shadow-sm">
+            <div class="card-header bg-theme-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-fingerprint me-2"></i> Kontrol Data Biometrik Sidik Jari Perangkat IoT</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="showSection('home')">Kembali</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle text-center mb-0" id="table-iot">
+                        <thead class="table-warning text-dark">
+                            <tr>
+                                <th>Slot ID Hardware</th>
+                                <th>Nama Lengkap Siswa</th>
+                                <th>Kelas / Jurusan</th>
+                                <th>Registrasi Jari Jauh (Enroll)</th>
+                                <th>Hapus Dari Sensor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-iot"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================================
+    <!-- LAYOUT COMPONENT: DOM BOX MODAL POP-UP LIGHTBOX MAGNIFIER
+    <!-- ======================================================== -->
+    <div id="lightboxOverlay" class="custom-lightbox" onclick="tutupMagnifierPopUp()">
+        <div class="lightbox-content-box" onclick="event.stopPropagation()">
+            <div class="lightbox-close-btn" onclick="tutupMagnifierPopUp()"><i class="bi bi-x-lg"></i></div>
+            <img id="lightboxTargetImg" src="" class="lightbox-img" alt="Pratinjau Foto Absen Diperbesar">
+            <div class="zoom-hint-text"><i class="bi bi-zoom-in me-1"></i>Foto Kualitas Tinggi Terenkripsi Sistem IoT</div>
+        </div>
+    </div>
+
+    <script>
+        let rawCacheAdminData = null;
+        let isAudioPlaying = false; 
+        let isTimeInputFocused = false; 
+
+        function showSection(sectionName) {
+            localStorage.setItem('active_admin_section', sectionName);
+            document.getElementById('home-section').style.display = 'none';
+            document.getElementById('kamera-section').style.display = 'none';
+            document.getElementById('perizinan-section').style.display = 'none';
+            document.getElementById('laporan-section').style.display = 'none';
+            document.getElementById('jam-sekolah-section').style.display = 'none';
+            document.getElementById('tambah-akun-section').style.display = 'none';
+            document.getElementById('kelola-akun-section').style.display = 'none';
+            document.getElementById('manajemen-iot-section').style.display = 'none';
+
+            const activeSection = document.getElementById(sectionName + '-section');
+            if (activeSection) { activeSection.style.display = 'block'; }
+        }
+
+        // ========================================================
+        // INTERAKSI JAVASCRIPT: ENGINE KENDALI POP-UP MAGNIFIER ZOOM
+        // ========================================================
+        function bukaMagnifierPopUp(srcGambarAsli) {
+            const lightbox = document.getElementById('lightboxOverlay');
+            const targetImg = document.getElementById('lightboxTargetImg');
+            
+            targetImg.src = srcGambarAsli;
+            lightbox.classList.add('show');
+            isAudioPlaying = true; // Pinjam status lock agar tabel tidak re-render saat melihat foto
+        }
+
+        function tutupMagnifierPopUp() {
+            const lightbox = document.getElementById('lightboxOverlay');
+            lightbox.classList.remove('show');
+            isAudioPlaying = false; // Buka kembali kunci sinkronisasi data
+        }
+
+        async function loadAdminDataRealtime() {
+            if (isAudioPlaying || isTimeInputFocused) { return; }
+
+            try {
+                const response = await fetch('/api/admin/data');
+                const data = await response.json();
+                rawCacheAdminData = data;
+                
+                document.getElementById('count-kamera').innerText = data.attendance_logs.length + " Presensi";
+
+                // Render Log Kamera
+                let kameraHtml = '';
+                data.attendance_logs.forEach(log => {
+                    kameraHtml += `
+                    <tr>
+                        <form action="/admin/attendance/update/${log.id}" method="POST">
+                            <td class="fw-bold">#${log.student_id}</td>
+                            <td class="text-start">${log.students.name || 'Siswa'}</td>
+                            <td><span class="badge bg-secondary">${log.students.class_level} ${log.students.major}</span></td>
+                            <td>${log.created_at}</td>
+                            <td>
+                                ${log.photo_url ? `<img src="${log.photo_url}" class="clickable-lens" style="width: 70px; height: 50px; object-fit: cover; border-radius: 6px;" onclick="bukaMagnifierPopUp(this.src)" title="Klik untuk memperbesar gambar">` : `<span class="text-muted small">No Photo</span>`}
+                            </td>
+                            <td>
+                                <select name="status" class="form-select form-select-sm mx-auto" style="width: 110px;">
+                                    <option value="Hadir" ${log.status == 'Hadir' ? 'selected' : ''}>Hadir</option>
+                                    <option value="Kesiangan" ${log.status == 'Kesiangan' ? 'selected' : ''}>Kesiangan</option>
+                                    <option value="Izin" ${log.status == 'Izin' ? 'selected' : ''}>Izin</option>
+                                    <option value="Sakit" ${log.status == 'Sakit' ? 'selected' : ''}>Sakit</option>
+                                    <option value="Alpa" ${log.status == 'Alpa' ? 'selected' : ''}>Alpa</option>
+                                    <option value="Bolos" ${log.status == 'Bolos' ? 'selected' : ''}>Bolos</option>
+                                </select>
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-1">
+                                    <button type="submit" class="btn btn-sm btn-success px-2"><i class="bi bi-floppy-fill"></i></button>
+                                    <a href="/admin/attendance/delete/${log.id}" class="btn btn-sm btn-danger px-2" onclick="return confirm('Hapus log?')"><i class="bi bi-trash3-fill"></i></a>
+                                </div>
+                            </td>
+                        </form>
+                    </tr>`;
+                });
+                document.getElementById('tbody-kamera').innerHTML = kameraHtml;
+
+                // Render Perizinan
+                let pendingHtml = '';
+                let riwayatHtml = '';
+                let pendingCounter = 0;
+
+                data.permissions.forEach(perm => {
+                    if (perm.status === "Pending") {
+                        pendingCounter++;
+                        pendingHtml += `
+                        <tr>
+                            <td class="fw-bold">#${perm.student_id}</td>
+                            <td class="text-start fw-semibold">${perm.students.name}</td>
+                            <td><span class="badge bg-dark">${perm.students.class_level} ${perm.students.major}</span></td>
+                            <td><span class="badge bg-light text-primary border px-2.5 py-1.5 fw-bold"><i class="bi bi-bookmark-star-fill me-1"></i>${perm.reason}</span></td>
+                            <td class="font-monospace text-secondary fw-bold">${perm.permission_date}</td>
+                            <td>
+                                ${perm.proof_url ? `<audio src="${perm.proof_url}" controls class="vn-player-node" style="max-width: 140px; height: 28px;"></audio>` : `<span class="text-muted small">Tanpa VN</span>`}
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a href="/admin/permissions/quick-verify/${perm.id}/Approve" class="btn btn-sm btn-success fw-bold px-3 shadow-sm" onclick="return confirm('Setujui surat izin?')">✓ Setujui</a>
+                                    <a href="/admin/permissions/quick-verify/${perm.id}/Rejected" class="btn btn-sm btn-danger fw-bold px-3 shadow-sm" onclick="return confirm('Tolak surat izin?')">❌ Tolak</a>
+                                </div>
+                            </td>
+                        </tr>`;
+                    } else {
+                        let badgeColor = perm.status === "Approve" ? "bg-success" : "bg-danger";
+                        let labelStatus = perm.status === "Approve" ? "Approved" : "Rejected";
+                        riwayatHtml += `<tr data-riwayat-class="${perm.students.major}"><td class="fw-bold text-muted">#${perm.student_id}</td><td class="text-start text-secondary">${perm.students.name}</td><td><span class="badge bg-secondary">${perm.students.class_level} ${perm.students.major}</span></td><td><span class="badge bg-light text-dark border">${perm.reason}</span></td><td>${perm.permission_date}</td><td><span class="badge ${badgeColor} px-3 py-1.5">${labelStatus}</span></td><td><a href="/admin/permissions/delete/${perm.id}" class="btn btn-sm btn-outline-danger p-1 border-0" onclick="return confirm('Hapus arsip?')"><i class="bi bi-trash3-fill"></i></a></td></tr>`;
+                    }
+                });
+
+                document.getElementById('count-perizinan').innerText = pendingCounter + " Berkas Baru";
+                document.getElementById('badge-pending-count').innerText = pendingCounter;
+                document.getElementById('tbody-perizinan-pending').innerHTML = pendingHtml || '<tr><td colspan="7" class="text-muted py-3">Kotak masuk bersih! Semua izin telah diverifikasi.</td></tr>';
+                document.getElementById('tbody-perizinan-riwayat').innerHTML = riwayatHtml || '<tr><td colspan="7" class="text-muted py-3">Belum ada riwayat arsip perizinan</td></tr>';
+
+                const audioPlayers = document.querySelectorAll('.vn-player-node');
+                audioPlayers.forEach(player => {
+                    player.addEventListener('play', () => { isAudioPlaying = true; });
+                    player.addEventListener('pause', () => { isAudioPlaying = false; });
+                    player.addEventListener('ended', () => { isAudioPlaying = false; });
+                });
+
+                // Render Jam Sekolah
+                let jamHtml = '';
+                const hariUrut = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
+                hariUrut.forEach(hName => {
+                    let hData = data.school_hours.find(x => x.day_name === hName) || {time_in: "07:00:00", time_out: "14:00:00"};
+                    jamHtml += `
+                    <tr>
+                        <td class="fw-bold text-dark text-start ps-4"><i class="bi bi-calendar-day text-primary me-2"></i>${hName}</td>
+                        <td><input type="time" id="in-${hName}" class="form-control form-control-sm text-center mx-auto" style="max-width:130px;" value="${hData.time_in}" onfocus="setIsTimeInputFocused(true)" onblur="setIsTimeInputFocused(false)"></td>
+                        <td><input type="time" id="out-${hName}" class="form-control form-control-sm text-center mx-auto" style="max-width:130px;" value="${hData.time_out}" onfocus="setIsTimeInputFocused(true)" onblur="setIsTimeInputFocused(false)"></td>
+                        <td><button type="button" class="btn btn-sm btn-primary px-3 fw-bold shadow-sm" onclick="simpanJamSekolahAJAX('${hName}')"><i class="bi bi-check-circle-fill me-1"></i>Terapkan</button></td>
+                    </tr>`;
+                });
+                document.getElementById('tbody-jam-sekolah').innerHTML = jamHtml;
+
+                // Render Master Kredensial
+                if(document.getElementById('tbody-kelola').innerHTML === "") {
+                    let kelolaHtml = ''; let iotHtml = '';
+                    data.students.forEach(std => {
+                        kelolaHtml += `<tr><form action="/admin/update-student/${std.id}" method="POST"><td><input type="number" name="student_id" class="form-control form-control-sm text-center fw-bold bg-light" value="${std.id}" style="width: 70px;" required></td><td><input type="text" name="name" class="form-control form-control-sm text-center" value="${std.name}" required></td><td><input type="text" name="parent_name" class="form-control form-control-sm text-center" value="${std.parent_name}" required></td><td><select name="class_level" class="form-select form-select-sm"><option value="X" ${std.class_level=='X'?'selected':''}>X</option><option value="XI" ${std.class_level=='XI'?'selected':''}>XI</option><option value="XII" ${std.class_level=='XII'?'selected':''}>XII</option></select></td><td><select name="major" class="form-select form-select-sm"><option value="BD" ${std.major=='BD'?'selected':''}>BD</option><option value="TKJ" ${std.major=='TKJ'?'selected':''}>TKJ</option><option value="TO" ${std.major=='TO'?'selected':''}>TO</option></select></td><td><input type="text" name="parent_phone" class="form-control form-control-sm text-center" value="${std.parent_phone}" required></td><td><button type="submit" class="btn btn-sm btn-theme-action px-2"><i class="bi bi-floppy-fill"></i></button></td></form></tr>`;
+                        iotHtml += `<tr><td class="fw-bold text-dark">Slot #${std.id}</td><td class="text-start ps-4">${std.name}</td><td><span class="badge bg-secondary">${std.class_level} ${std.major}</span></td><td><a href="/admin/fingerprint/add/${std.id}" class="btn btn-sm btn-success px-3 fw-semibold"><i class="bi bi-plus-circle-fill me-1"></i> Mulai Enroll</a></td><td><a href="/admin/fingerprint/delete/${std.id}" class="btn btn-sm btn-danger px-3 fw-semibold" onclick="return confirm('Hapus?')"><i class="bi bi-trash3-fill"></i> Hapus Jari</a></td></tr>`;
+                    });
+                    document.getElementById('tbody-kelola').innerHTML = kelolaHtml;
+                    document.getElementById('tbody-iot').innerHTML = iotHtml;
+                }
+
+                renderLaporanSiswa();
+                filterRiwayatIzinKelas(); 
+
+            } catch (e) {}
+        }
+
+        function setIsTimeInputFocused(status) { isTimeInputFocused = status; }
+
+        function simpanJamSekolahAJAX(hariName) {
+            const timeInVal = document.getElementById('in-' + hariName).value;
+            const timeOutVal = document.getElementById('out-' + hariName).value;
+            fetch('/api/admin/hours/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ day_name: hariName, time_in: timeInVal, time_out: timeOutVal })
+            })
+            .then(res => res.json())
+            .then(resData => {
+                if(resData.status === "success") { alert("🟢 Berhasil memperbarui jam " + hariName); }
+            });
+        }
+
+        function filterRiwayatIzinKelas() {
+            const selectVal = document.getElementById('filter-riwayat-izin').value;
+            const tbody = document.getElementById('tbody-perizinan-riwayat');
+            const rows = tbody.getElementsByTagName('tr');
+            for (let i = 0; i < rows.length; i++) {
+                const rowClass = rows[i].getAttribute('data-riwayat-class');
+                if (!rowClass) continue;
+                rows[i].style.display = (selectVal === "ALL" || rowClass === selectVal) ? '' : 'none';
+            }
+        }
+
+        function renderLaporanSiswa() {
+            if (!rawCacheAdminData) return;
+            
+            const filterMajor = document.getElementById('filter-laporan-kelas').value;
+            const filterName = document.getElementById('filter-laporan-nama').value.toLowerCase();
+            const filterDate = document.getElementById('filter-laporan-tanggal').value;
+            const filterMonth = document.getElementById('filter-laporan-bulan').value;
+
+            let formattedFilterDate = "";
+            if (filterDate) {
+                const p = filterDate.split("-");
+                formattedFilterDate = p[2] + "/" + p[1] + "/" + p[0];
+            }
+
+            let laporanHtml = '';
+
+            rawCacheAdminData.students.forEach(student => {
+                if (filterMajor !== "ALL" && student.major !== filterMajor) return;
+                if (filterName && !student.name.toLowerCase().includes(filterName)) return;
+
+                let countHadir = 0;
+                let countKesiangan = 0;
+                let countBolos = 0;
+
+                rawCacheAdminData.attendance_logs.forEach(log => {
+                    if (log.student_id === student.id) {
+                        const logDatePart = log.created_at.split(" ")[0]; 
+                        const logMonthPart = logDatePart.split("/")[1]; 
+
+                        if (filterDate && logDatePart !== formattedFilterDate) return;
+                        if (filterMonth !== "ALL" && logMonthPart !== filterMonth) return;
+
+                        if (log.status === "Hadir") countHadir++;
+                        else if (log.status === "Kesiangan") countKesiangan++;
+                        else if (log.status === "Bolos") countBolos++;
+                    }
+                });
+
+                laporanHtml += `
+                <tr>
+                    <td class="fw-bold">#${student.id}</td>
+                    <td class="text-start font-monospace">${student.name}</td>
+                    <td><span class="badge bg-secondary">${student.class_level} ${student.major}</span></td>
+                    <td class="text-success fw-bold">${countHadir} Hari</td>
+                    <td class="text-warning fw-bold">${countKesiangan} Hari</td>
+                    <td class="text-danger fw-bold">${countBolos} Hari</td>
+                </tr>`;
+            });
+
+            document.getElementById('tbody-laporan').innerHTML = laporanHtml || '<tr><td colspan="6" class="text-muted">Tidak ada data rekapitulasi.</td></tr>';
+        }
+
+        function jalankanUnduhExcelFormal() {
+            const major = document.getElementById('filter-laporan-kelas').value;
+            const name = document.getElementById('filter-laporan-nama').value;
+            const date = document.getElementById('filter-laporan-tanggal').value;
+            const month = document.getElementById('filter-laporan-bulan').value;
+            window.location.href = `/admin/laporan/download-excel?major=${major}&name=${name}&date=${date}&month=${month}`;
+        }
+
+        setInterval(loadAdminDataRealtime, 3000);
+
+        window.onload = function() {
+            loadAdminDataRealtime();
+            const lastSection = localStorage.getItem('active_admin_section') || 'home';
+            showSection(lastSection);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Orang Tua Siswa</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        body { background-color: #f8fafc; color: #334155; }
+        .bg-theme-dark { background-color: #1e293b !important; }
+        .text-theme-emerald { color: #0f766e !important; }
+        
+        .menu-card {
+            border: 1px solid #e2e8f0; border-radius: 20px;
+            transition: all 0.25s ease; cursor: pointer; background: #ffffff;
+        }
+        .menu-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 22px rgba(30, 41, 59, 0.08) !important;
+            border-color: #0f766e;
+        }
+        .icon-circle {
+            width: 65px; height: 65px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 15px; font-size: 26px;
+        }
+        
+        .section-card { border: none; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: #ffffff; overflow: hidden; display: none; }
+        .table thead { background-color: #1e293b; color: #ffffff; }
+        .table thead th { font-weight: 600; padding: 12px; }
+        .table tbody td { padding: 12px; vertical-align: middle; }
+        .form-control, .form-select { border-radius: 8px; border: 1px solid #cbd5e1; }
+        
+        .qa-card { border: none; border-radius: 16px; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; }
+        .qa-preview-img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; border: 1px solid #cbd5e1; }
+        
+        /* MINI STATISTIK CARD FOR BULANAN */
+        .stat-box { border-radius: 12px; padding: 12px; text-align: center; font-weight: bold; border: 1px solid #e2e8f0; background: #f8fafc; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-theme-dark sticky-top shadow-sm py-3">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1 fw-bold"><i class="bi bi-person-video3 text-theme-emerald me-2"></i> PORTAL MONITORING</span>
+            <button class="btn btn-outline-light btn-sm fw-bold rounded-2 px-3" onclick="showSection('home')"><i class="bi bi-house-door-fill me-1"></i> Beranda</button>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        
+        <div class="p-4 bg-white rounded-4 shadow-sm mb-4 border d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <span class="text-muted small text-uppercase fw-bold">Nama Orang Tua / Wali:</span>
+                <h4 class="text-theme-emerald fw-bold mb-1">{{ parent_name }}</h4>
+                <span class="text-muted small text-uppercase d-block fw-semibold">Memonitor Siswa: <strong class="text-dark">{{ student_name }}</strong></span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-theme-dark px-3 py-2 fs-6 rounded-3">Kelas: {{ class_level }} {{ major }}</span>
+                <a href="/orangtua/logout" class="btn btn-sm btn-outline-danger fw-bold rounded-2"><i class="bi bi-box-arrow-right"></i> Keluar</a>
+            </div>
+        </div>
+        
+        <div id="home-section">
+            <div class="card qa-card p-4 mb-5">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Akses Kilat Hari Ini (<span id="qa-hari">--</span>, <span id="qa-tanggal">--/--/----</span>)</h5>
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-3 py-1.5 rounded-2">Sinkronisasi Otomatis</span>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light h-100 d-flex align-items-center gap-3">
+                            <div class="flex-grow-1">
+                                <span class="text-uppercase text-secondary fw-bold d-block mb-1" style="font-size: 11px;">Jam Datang (Batas: <span id="qa-target-masuk">--:--</span>)</span>
+                                <h2 class="fw-bold text-dark mb-1" id="qa-jam-datang">--:--</h2>
+                                <div id="qa-status-datang"></div>
+                            </div>
+                            <div style="width: 140px;" id="qa-box-foto-datang">
+                                <div class="text-center py-4 bg-secondary bg-opacity-10 text-muted rounded-3 border small">No Photo</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light h-100 d-flex align-items-center gap-3">
+                            <div class="flex-grow-1">
+                                <span class="text-uppercase text-secondary fw-bold d-block mb-1" style="font-size: 11px;">Jam Pulang (Target: <span id="qa-target-pulang">--:--</span>)</span>
+                                <h2 class="fw-bold text-dark mb-1" id="qa-jam-pulang">--:--</h2>
+                                <div id="qa-status-pulang"></div>
+                            </div>
+                            <div style="width: 140px;" id="qa-box-foto-pulang">
+                                <div class="text-center py-4 bg-secondary bg-opacity-10 text-muted rounded-3 border small">No Photo</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-5">
+                <h3 class="fw-bold text-dark">Menu Layanan Informasi Orang Tua</h3>
+                <p class="text-muted">Akses informasi kehadiran real-time, ajukan izin digital, dan lihat laporan bulanan anak.</p>
+            </div>
+            
+            <div class="row g-4 justify-content-center">
+                <div class="col-6 col-md-3" onclick="showSection('kamera')">
+                    <div class="card menu-card h-100 p-4 text-center shadow-sm">
+                        <div class="icon-circle bg-light text-theme-emerald"><i class="bi bi-camera-fill"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Presensi Kamera</h6>
+                        <small class="text-muted d-block" id="count-kamera">0 Riwayat Foto</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3" onclick="showSection('form-izin')">
+                    <div class="card menu-card h-100 p-4 text-center shadow-sm">
+                        <div class="icon-circle bg-light text-theme-emerald"><i class="bi bi-file-earmark-text-fill"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Ajukan Perizinan</h6>
+                        <small class="text-muted d-block">Input Surat Izin</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3" onclick="showSection('status-izin')">
+                    <div class="card menu-card h-100 p-4 text-center shadow-sm">
+                        <div class="icon-circle bg-light text-theme-emerald"><i class="bi bi-patch-check-fill"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Status Verifikasi</h6>
+                        <small class="text-muted d-block" id="count-izin">0 Pengajuan</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3" onclick="showSection('rekapan-semester')">
+                    <div class="card menu-card h-100 p-4 text-center shadow-sm border-success bg-success bg-opacity-10">
+                        <div class="icon-circle bg-success text-white"><i class="bi bi-calendar-check-fill"></i></div>
+                        <h6 class="fw-bold text-dark mb-1">Laporan Bulanan</h6>
+                        <small class="text-success fw-bold d-block">Detail Semua Bulan</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="kamera-section" class="card section-card shadow-sm">
+            <div class="card-header bg-theme-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-camera-fill me-2"></i> Log Rekaman Kamera Presensi</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="showSection('home')">Kembali</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0 text-center">
+                    <thead>
+                        <tr>
+                            <th>Waktu Masuk Sekolah</th>
+                            <th>Status Kehadiran</th>
+                            <th>Bukti Gambar Kamera</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-kamera-orangtua"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="form-izin-section" class="card section-card shadow-sm" style="max-width: 550px; margin: 0 auto;">
+            <div class="card-header bg-theme-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-text-fill me-2"></i> Form Pengajuan Absen Digital</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="showSection('home')">Kembali</button>
+            </div>
+            <div class="card-body p-4 bg-white">
+                <form action="/orangtua/izin" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="student_id" id="target_student_id" value="{{ student_id }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">ALASAN KETIDAKHADIRAN</label>
+                        <select name="reason" class="form-select" required>
+                            <option value="Sakit">Sakit</option>
+                            <option value="Izin">Izin</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small">TANGGAL ABSEN</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2.5">Kirim Dokumen Izin</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="status-izin-section" class="card section-card shadow-sm">
+            <div class="card-header bg-theme-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-patch-check-fill me-2"></i> Laporan Persetujuan Berkas Izin</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="showSection('home')">Kembali</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tanggal Ketidakhadiran</th>
+                            <th>Kategori Alasan</th>
+                            <th>Status Konfirmasi Admin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-izin-orangtua"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- --- PERBAIKAN TOTAL LAYOUT LAPORAN SEMUA BULAN YANG MUDAH DIPAHAMI --- -->
+        <div id="rekapan-semester-section" class="card section-card shadow-sm">
+            <div class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-check-fill me-2"></i> Laporan Rekapitulasi Kehadiran Bulanan Berjalan</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="showSection('home')">Kembali</button>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-secondary">SILAKAN PILIH BULAN PEMANTAUAN:</label>
+                        <!-- Dropdown dinamis mendeteksi semua bulan dari data database -->
+                        <select class="form-select border-2 fw-bold text-success" id="monthSelector" onchange="gantiSaringanBulanMurni(this.value)">
+                            <option value="">-- Memuat Bulan --</option>
+                        </select>
+                    </div>
+                    
+                    <!-- KEMUDAHAN ORANG TUA: PAPAN STATISTIK AKUMULASI BULANAN AKTIF -->
+                    <div class="col-md-8">
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="stat-box text-success border-success bg-success bg-opacity-10">🟢 Hadir: <span id="stat-hadir">0</span> Hari</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-box text-warning border-warning bg-warning bg-opacity-10">⚠️ Telat: <span id="stat-telat">0</span> Hari</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-box text-danger border-danger bg-danger bg-opacity-10">🛑 Bolos: <span id="stat-bolos">0</span> Hari</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive rounded-3 border">
+                    <table class="table table-hover align-middle text-center mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Hari / Tanggal Absen</th>
+                                <th>Status Absensi Absolut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-bulanan-recap">
+                            <tr><td colspan="2" class="text-muted py-3">Silakan pilih bulan pemantauan terlebih dahulu.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Cache data lokal untuk efisiensi render
+        let dataCacheBulanan = null;
+
+        function showSection(sectionName) {
+            localStorage.setItem('active_parent_section', sectionName);
+            document.getElementById('home-section').style.display = 'none';
+            document.getElementById('kamera-section').style.display = 'none';
+            document.getElementById('form-izin-section').style.display = 'none';
+            document.getElementById('status-izin-section').style.display = 'none';
+            document.getElementById('rekapan-semester-section').style.display = 'none';
+
+            const activeSection = document.getElementById(sectionName + '-section');
+            if (activeSection) { activeSection.style.display = 'block'; }
+        }
+
+        function dapatkanBadgeStatus(statusText) {
+            if(statusText === "Hadir" || statusText === "Tepat Waktu" || statusText === "Sudah Pulang") {
+                return `<span class="badge bg-success px-2.5 py-1.5"><i class="bi bi-check-circle-fill me-1"></i>Hadir</span>`;
+            } else if(statusText === "Kesiangan") {
+                return `<span class="badge bg-warning text-dark px-2.5 py-1.5"><i class="bi bi-exclamation-triangle-fill me-1"></i>Kesiangan</span>`;
+            } else if(statusText === "Bolos") {
+                return `<span class="badge bg-danger px-2.5 py-1.5"><i class="bi bi-shield-x me-1"></i>Bolos</span>`;
+            } else if(statusText === "Tidak Hadir") {
+                return `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2.5 py-1.5"><i class="bi bi-x-circle-fill me-1"></i>Tidak Hadir</span>`;
+            } else {
+                return `<span class="badge bg-secondary px-2.5 py-1.5">${statusText}</span>`;
+            }
+        }
+
+        async function loadOrangtuaDataRealtime() {
+            const studentId = document.getElementById('target_student_id').value;
+            try {
+                const response = await fetch('/api/orangtua/data/' + studentId);
+                const data = await response.json();
+                dataCacheBulanan = data.detailed_recap; // Ambil object map bulan
+
+                document.getElementById('count-kamera').innerText = data.my_child_logs.length + " Riwayat Foto";
+                document.getElementById('count-izin').innerText = data.my_permission_logs.length + " Pengajuan";
+
+                // Set data Quick Access Hari ini
+                document.getElementById('qa-hari').innerText = data.quick_access.hari;
+                document.getElementById('qa-tanggal').innerText = data.quick_access.tanggal;
+                document.getElementById('qa-target-masuk').innerText = data.quick_access.jam_masuk_target;
+                document.getElementById('qa-target-pulang').innerText = data.quick_access.jam_pulang_target;
+                document.getElementById('qa-jam-datang').innerText = data.quick_access.datang.waktu;
+                document.getElementById('qa-status-datang').innerHTML = dapatkanBadgeStatus(data.quick_access.datang.status);
+                document.getElementById('qa-jam-pulang').innerText = data.quick_access.pulang.waktu;
+                document.getElementById('qa-status-pulang').innerHTML = dapatkanBadgeStatus(data.quick_access.pulang.status);
+
+                // Render tabel riwayat foto utama
+                let kameraHtml = '';
+                data.my_child_logs.forEach(log => {
+                    kameraHtml += `<tr><td class="fw-semibold">${log.created_at}</td><td>${dapatkanBadgeStatus(log.status)}</td><td><a href="${log.photo_url}" target="_blank"><img src="${log.photo_url}" class="img-thumbnail" style="width: 85px; height: 60px; object-fit: cover;"></a></td></tr>`;
+                });
+                document.getElementById('tbody-kamera-orangtua').innerHTML = kameraHtml || '<tr><td colspan="3" class="text-muted py-4">Belum ada log presensi</td></tr>';
+
+                // Render tabel pengajuan izin
+                let izinHtml = '';
+                data.my_permission_logs.forEach(perm => {
+                    let badgeClass = perm.status == 'Pending' ? 'bg-warning text-dark' : (perm.status == 'Approve' ? 'bg-success' : 'bg-danger');
+                    izinHtml += `<tr><td class="fw-semibold">${perm.permission_date}</td><td><span class="badge bg-light text-dark border px-3 py-1.5">${perm.reason}</span></td><td><span class="badge ${badgeClass} px-3 py-1.5">${perm.status}</span></td></tr>`;
+                });
+                document.getElementById('tbody-izin-orangtua').innerHTML = izinHtml || '<tr><td colspan="3" class="text-muted py-4">Belum ada dokumen perizinan</td></tr>';
+
+                // --- OPTIMASI: ISI PILIHAN DROPDOWN BULAN SECARA DINAMIS BERDASARKAN DATABASE ---
+                const selector = document.getElementById('monthSelector');
+                const lastSelectedBulan = selector.value;
+                
+                let selectHtml = '<option value="">-- Pilih Bulan --</option>';
+                Object.keys(dataCacheBulanan).forEach(bulan => {
+                    selectHtml += `<option value="${bulan}" ${lastSelectedBulan === bulan ? 'selected' : ''}>${bulan}</option>`;
+                });
+                selector.innerHTML = selectHtml;
+
+                // Jika ada bulan yang sedang dibuka, segarkan datanya agar sinkron secara real-time
+                if (lastSelectedBulan !== "") {
+                    gantiSaringanBulanMurni(lastSelectedBulan);
+                }
+
+            } catch(e) {}
+        }
+
+        // ========================================================
+        // FIX KUNCI: FUNGSI SINKRONISASI FILTER DAN PAPAN HITUNG STATISTIK AKTIF
+        // ========================================================
+        function gantiSaringanBulanMurni(bulanTerpilih) {
+            if (!dataCacheBulanan || bulanTerpilih === "") {
+                document.getElementById('tbody-bulanan-recap').innerHTML = '<tr><td colspan="2" class="text-muted py-3">Silakan pilih bulan pemantauan terlebih dahulu.</td></tr>';
+                document.getElementById('stat-hadir').innerText = "0";
+                document.getElementById('stat-telat').innerText = "0";
+                document.getElementById('stat-bolos').innerText = "0";
+                return;
+            }
+
+            const logsBulanIni = dataCacheBulanan[bulanTerpilih] || [];
+            let rowsHtml = '';
+            
+            // Variabel counter statistik
+            let totalHadir = 0;
+            let totalTelat = 0;
+            let totalBolos = 0;
+
+            logsBulanIni.forEach(item => {
+                rowsHtml += `<tr><td class="fw-bold text-secondary text-start ps-5"><i class="bi bi-calendar2-day text-success me-2"></i>${item.tanggal}</td><td>${dapatkanBadgeStatus(item.status)}</td></tr>`;
+                
+                // Akumulasikan ke papan statistik atas
+                if (item.status === "Hadir" || item.status === "Tepat Waktu" || item.status === "Sudah Pulang") totalHadir++;
+                else if (item.status === "Kesiangan") totalTelat++;
+                else if (item.status === "Bolos") totalBolos++;
+            });
+
+            // Suntik data ke papan statistik card info
+            document.getElementById('stat-hadir').innerText = totalHadir;
+            document.getElementById('stat-telat').innerText = totalTelat;
+            document.getElementById('stat-bolos').innerText = totalBolos;
+            
+            // Render baris ke tabel
+            document.getElementById('tbody-bulanan-recap').innerHTML = rowsHtml || '<tr><td colspan="2" class="text-muted py-3">Tidak ada data absensi di bulan ini.</td></tr>';
+        }
+
+        setInterval(loadOrangtuaDataRealtime, 3000);
+
+        window.onload = function() {
+            loadOrangtuaDataRealtime();
+            const lastSection = localStorage.getItem('active_parent_section') || 'home';
+            showSection(lastSection);
+        };
+    </script>
+</body>
+</html>
