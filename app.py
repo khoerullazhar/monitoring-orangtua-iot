@@ -458,5 +458,8 @@ def quick_verify_permission(perm_id, new_status):
         return redirect(url_for('admin_dashboard'))
     except Exception as e: return str(e), 500
 
+# Penugasan objek global agar terbaca oleh handler Vercel Serverless
+app = app
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
