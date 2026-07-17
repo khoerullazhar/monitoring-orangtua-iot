@@ -459,4 +459,4 @@ def quick_verify_permission(perm_id, new_status):
     except Exception as e: return str(e), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=7860, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
