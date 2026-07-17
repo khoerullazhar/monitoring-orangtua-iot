@@ -10,8 +10,12 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
+# Deklarasi Top-Level Wajib untuk Vercel Serverless
 app = Flask(__name__)
 app.secret_key = "kunci_rahasia_absensi_khoerul"
+
+# Menjadikan handler global siap dibaca WSGI Vercel
+app = app
 
 # --- KONFIGURASI UTAMA DATABASE SUPABASE ---
 SUPABASE_URL = "https://filpxlbzeallnqawjqbe.supabase.co"
@@ -412,9 +416,7 @@ def download_laporan_excel_formal():
                     ws_det.append([s['id'], s['name'], f"{s['class_level']} {s['major']}", l_date, wib_t.split(" ")[1], log['status']])
                     for col_d in range(1, 7):
                         cell_d = ws_det.cell(row=row_det_idx, column=col_d)
-                        cell_d.font = font_body; cell_d.border = thin_border; cell_d.alignment = align_center if col_d
-Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
- != 2 else align_left
+                        cell_d.font = font_body; cell_d.border = thin_border; cell_d.alignment = align_center if col_d != 2 else align_left
                         if col_d == 6:
                             if log['status'] == "Kesiangan": cell_d.fill = fill_yellow
                             elif log['status'] == "Bolos": cell_d.fill = fill_red
@@ -458,8 +460,45 @@ def quick_verify_permission(perm_id, new_status):
         return redirect(url_for('admin_dashboard'))
     except Exception as e: return str(e), 500
 
-# Penugasan objek global agar terbaca oleh handler Vercel Serverless
-app = app
+# Endpoint API Penengah untuk Fitur Perintah Jari IoT (Enroll/Delete)
+@app.route('/api/admin/fingerprint/command', methods=['POST'])
+def send_fingerprint_command():
+    if not session.get('logged_in_admin'):
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+    try:
+        data = request.json
+        student_id = int(data.get('student_id'))
+        action = data.get('action')
+        
+        supabase.table("system_commands").insert({
+            "student_id": student_id,
+            "command": action,
+            "status": "PENDING"
+        }).execute()
+        return jsonify({"status": "success", "message": f"Sinyal {action} berhasil dipancarkan ke hardware IoT!"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/update-student/<int:id>', methods=['POST'])
+def update_student(id):
+    if not session.get('logged_in_admin'): return redirect(url_for('admin_login'))
+    try:
+        supabase.table("students").update({"name": request.form.get('name'), "parent_name": request.form.get('parent_name'), "class_level": request.form.get('class_level'), "major": request.form.get('major'), "parent_phone": request.form.get('parent_phone')}).eq("id", id).execute()
+        return redirect(url_for('admin_dashboard'))
+    except Exception as e: return str(e), 500
+
+@app.route('/admin/add-student', methods=['POST'])
+def add_student():
+    if not session.get('logged_in_admin'): return redirect(url_for('admin_login'))
+    try:
+        supabase.table("students").insert({"id": int(request.form.get('student_id')), "name": request.form.get('name'), "parent_name": request.form.get('parent_name'), "parent_phone": request.form.get('parent_phone'), "class_level": request.form.get('class_level'), "major": request.form.get('major')}).execute()
+        return redirect(url_for('admin_dashboard'))
+    except Exception as e: return str(e), 500
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.clear()
+    return redirect(url_for('admin_login'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
